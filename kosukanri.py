@@ -1,12 +1,12 @@
 import sys
 import os
-from os import path
+import logging
+import re
 import subprocess
+from os import path
 from datetime import date, datetime
 from collections import namedtuple, defaultdict
 from calendar import monthrange
-import logging
-import re
 
 logging.basicConfig(level=logging.DEBUG)
 
