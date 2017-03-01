@@ -52,9 +52,11 @@ def git_log_args(since, authors):
 def print_summary(data, month):
     _, days_in_month = monthrange(month.year, month.month)
     days = [month.replace(day=d) for d in xrange(1, days_in_month + 1)]
+    print('=== Commit Graph ===')
     for day in days:
         entries = data[day]
         print('%s |%s' % (day, '*' * len(entries)))
+    print('\n=== Time Breakdown ===')
     for day in days:
         entries = data[day]
         if entries:
