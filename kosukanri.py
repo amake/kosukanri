@@ -18,10 +18,8 @@ def get_stdout(cmd, cwd=None):
     stdout, stderr = proc.communicate()
     return stdout if proc.returncode == 0 else None
 
+GIT_LOG = ['git', 'log']
 GIT_CONFIG_GET = ['git', 'config', '--get']
-GIT_USER_NAME = get_stdout(GIT_CONFIG_GET + ['user.name']).strip()
-GIT_USER_EMAIL = get_stdout(GIT_CONFIG_GET + ['user.email']).strip()
-
 TICKET_PATTERN = re.compile(r'[A-Z0-9]+-[0-9]+')
 
 def list_git_repos(in_dir):
@@ -29,19 +27,25 @@ def list_git_repos(in_dir):
     return [item for item in items if path.isdir(item)
             and path.isdir(path.join(item, '.git'))]
 
-def get_entries(repo, since=None):
+def get_git_author(repo):
+    name = get_stdout(GIT_CONFIG_GET + ['user.name'], cwd=repo).strip()
+    email = get_stdout(GIT_CONFIG_GET + ['user.email'], cwd=repo).strip()
+    return '%s <%s>' % (name, email)
+
+def get_entries(repo, since=None, authors=None):
     if not since:
         since = date.today().replace(day=1)
-    log = get_stdout(['git', 'log'] + git_log_args(since), cwd=repo)
+    if not authors:
+        authors = set(get_git_author(r) for r in [repo, None])
+    log_cmd = GIT_LOG + git_log_args(since, authors)
+    log = get_stdout(log_cmd, cwd=repo)
     return [Entry(repo, *entry.split('\x00')) for entry in log.strip().split('\n')] if log else []
 
-def git_log_args(since):
+def git_log_args(since, authors):
     return ['--format=%at%x00%ct%x00%<(80,trunc)%s',
             '--all',
             '--since=%s' % since,
-            '--author=%(user_name)s <%(user_email)s>\|Aaron' %
-            {'user_name': GIT_USER_NAME,
-             'user_email': GIT_USER_EMAIL}]
+            '--author=%s' % '\|'.join(authors)]
 
 def print_summary(data, month):
     _, days_in_month = monthrange(month.year, month.month)
