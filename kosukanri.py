@@ -131,9 +131,9 @@ def summarize_tickets(tickets, day):
              for ticket, time in sorted(raw_times.iteritems())]
     return ', '.join(times)
 
-def main_impl(root, month, authors):
+def main_impl(root, month, authors, ignore_repos):
     logging.debug('Looking for repos in %s...', path.abspath(root))
-    repos = list_git_repos(root)
+    repos = [repo for repo in list_git_repos(root) if not path.basename(repo) in ignore_repos]
     logging.debug('Found %d repos', len(repos))
     entries = [entry for repo in repos for entry in get_entries(repo, month, authors)]
     daily = group_by_day(entries)
@@ -145,6 +145,7 @@ def main():
     parser.add_argument('path', help='path containing git repositories')
     parser.add_argument('--month', help='month to calculate stats for, in YYYY-MM format (default: this month)')
     parser.add_argument('--authors', help='comma-delimited list of additional authors to search for')
+    parser.add_argument('--ignore', help='comma-delimited list of repositories to ignore')
     args = parser.parse_args()
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -160,8 +161,9 @@ def main():
             sys.exit(1)
 
     authors = [] if not args.authors else args.authors.split(',')
+    ignore_repos = [] if not args.ignore else args.ignore.split(',')
 
-    main_impl(args.path, month, authors)
+    main_impl(args.path, month, authors, ignore_repos)
    
 if __name__ == '__main__':
     main()
