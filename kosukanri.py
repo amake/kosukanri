@@ -25,6 +25,9 @@ GIT_LOG = ['git', 'log']
 GIT_CONFIG_GET = ['git', 'config', '--get']
 TICKET_PATTERN = re.compile(r'[A-Z0-9]+-[0-9]+')
 
+def get_days_in_month(a_date):
+    return monthrange(a_date.year, a_date.month)[1]
+
 def list_git_repos(in_dir):
     items = [path.join(in_dir, item) for item in os.listdir(in_dir)]
     return [item for item in items if path.isdir(item)
@@ -46,14 +49,17 @@ def get_entries(repo, since=None, extra_authors=None):
     return [Entry(repo, *entry.split('\x00')) for entry in log.strip().split('\n')] if log else []
 
 def git_log_args(since, authors):
+    days = get_days_in_month(since)
+    until = since.replace(day=days)
     return ['--format=%at%x00%ct%x00%<(80,trunc)%s',
             '--all',
             '--since=%s' % since,
+            '--until=%s' % until,
             '--author=%s' % '\|'.join(authors)]
 
 def print_summary(data, month):
-    _, days_in_month = monthrange(month.year, month.month)
-    days = [month.replace(day=d) for d in xrange(1, days_in_month + 1)]
+    days_count = get_days_in_month(month)
+    days = [month.replace(day=d) for d in xrange(1, days_count + 1)]
     print('=== Commit Graph ===')
     for day in days:
         entries = data[day]
