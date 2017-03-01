@@ -16,7 +16,7 @@ def get_stdout(cmd, cwd=None):
     logging.debug(' '.join(cmd))
     if cwd:
         logging.debug('cwd: %s', cwd)
-    proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = proc.communicate()
     logging.debug(stdout)
     return stdout if proc.returncode == 0 else None
