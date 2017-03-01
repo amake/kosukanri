@@ -31,11 +31,12 @@ def get_git_author(repo):
     email = get_stdout(GIT_CONFIG_GET + ['user.email'], cwd=repo).strip()
     return '%s <%s>' % (name, email)
 
-def get_entries(repo, since=None, authors=None):
+def get_entries(repo, since=None, extra_authors=None):
     if not since:
         since = date.today().replace(day=1)
-    if not authors:
-        authors = set(get_git_author(r) for r in [repo, None])
+    authors = set(get_git_author(r) for r in [repo, None])
+    if extra_authors:
+        authors |= set(extra_authors)
     log_cmd = GIT_LOG + git_log_args(since, authors)
     log = get_stdout(log_cmd, cwd=repo)
     return [Entry(repo, *entry.split('\x00')) for entry in log.strip().split('\n')] if log else []
@@ -124,11 +125,11 @@ def summarize_tickets(tickets, day):
              for ticket, time in sorted(raw_times.iteritems())]
     return ', '.join(times)
 
-def main_impl(root, month):
-    logging.debug('Looking for repos in %s...',path.abspath(root))
+def main_impl(root, month, authors):
+    logging.debug('Looking for repos in %s...', path.abspath(root))
     repos = list_git_repos(root)
     logging.debug('Found %d repos', len(repos))
-    entries = [entry for repo in repos for entry in get_entries(repo, month)]
+    entries = [entry for repo in repos for entry in get_entries(repo, month, authors)]
     daily = group_by_day(entries)
     print_summary(daily, month)
         
@@ -136,7 +137,8 @@ def main():
     parser = ArgumentParser(description='Summarize commits to a collection of git repositories')
     parser.add_argument('--verbose', '-v', action='count', default=0)
     parser.add_argument('path', help='path containing git repositories')
-    parser.add_argument('--month', help='month to calculate stats for, in YYYY-MM format')
+    parser.add_argument('--month', help='month to calculate stats for, in YYYY-MM format (default: this month)')
+    parser.add_argument('--authors', help='comma-delimited list of additional authors to search for')
     args = parser.parse_args()
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -151,7 +153,9 @@ def main():
             logging.critical('Bad date format: %s', e)
             sys.exit(1)
 
-    main_impl(args.path, month)
+    authors = [] if not args.authors else args.authors.split(',')
+
+    main_impl(args.path, month, authors)
    
 if __name__ == '__main__':
     main()
