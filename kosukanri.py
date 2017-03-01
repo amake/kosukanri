@@ -48,7 +48,7 @@ def print_summary(data, month):
     days = [month.replace(day=d) for d in xrange(1, days_in_month + 1)]
     for day in days:
         entries = data[day]
-        print('%s: %s' % (day, '*' * len(entries)))
+        print('%s |%s' % (day, '*' * len(entries)))
     for day in days:
         entries = data[day]
         if entries:
