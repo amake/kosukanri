@@ -13,8 +13,10 @@ Entry = namedtuple('Entry', ['repo', 'authored', 'committed', 'summary'])
 
 
 def get_stdout(cmd, cwd=None):
+    logging.debug(' '.join(cmd))
     proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE)
     stdout, stderr = proc.communicate()
+    logging.debug(stdout)
     return stdout if proc.returncode == 0 else None
 
 GIT_LOG = ['git', 'log']
