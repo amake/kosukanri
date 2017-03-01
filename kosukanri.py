@@ -7,8 +7,7 @@ from os import path
 from datetime import date, datetime
 from collections import namedtuple, defaultdict
 from calendar import monthrange
-
-logging.basicConfig(level=logging.DEBUG)
+from argparse import ArgumentParser
 
 Entry = namedtuple('Entry', ['repo', 'authored', 'committed', 'summary'])
 
@@ -125,19 +124,34 @@ def summarize_tickets(tickets, day):
              for ticket, time in sorted(raw_times.iteritems())]
     return ', '.join(times)
 
-def main(root, datestr):
+def main_impl(root, month):
     logging.debug('Looking for repos in %s...',path.abspath(root))
     repos = list_git_repos(root)
     logging.debug('Found %d repos', len(repos))
-    try:
-        month = datetime.strptime(datestr, '%Y-%m').date()
-    except ValueError, e:
-        logging.critical('Bad date format: %s', e)
-        sys.exit(1)
     entries = [entry for repo in repos for entry in get_entries(repo, month)]
     daily = group_by_day(entries)
     print_summary(daily, month)
         
+def main():
+    parser = ArgumentParser(description='Summarize commits to a collection of git repositories')
+    parser.add_argument('--verbose', '-v', action='count', default=0)
+    parser.add_argument('path', help='path containing git repositories')
+    parser.add_argument('--month', help='month to calculate stats for, in YYYY-MM format')
+    args = parser.parse_args()
 
+    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    level = levels[min(len(levels) - 1, args.verbose)]
+    logging.basicConfig(level=level)
+
+    month = date.today().replace(day=1)
+    if args.month:
+        try:
+            month = datetime.strptime(args.month, '%Y-%m').date()
+        except ValueError, e:
+            logging.critical('Bad date format: %s', e)
+            sys.exit(1)
+
+    main_impl(args.path, month)
+   
 if __name__ == '__main__':
-    main(*sys.argv[1:])
+    main()
