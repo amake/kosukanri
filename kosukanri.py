@@ -4,7 +4,7 @@ import logging
 import re
 import subprocess
 from os import path
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from collections import namedtuple, defaultdict
 from calendar import monthrange
 from argparse import ArgumentParser
@@ -51,9 +51,11 @@ def get_entries(repo, since=None, extra_authors=None):
 def git_log_args(since, authors):
     days = get_days_in_month(since)
     until = since.replace(day=days)
+    # The --since date is not included in the output
+    real_since = since - timedelta(days=1)
     return ['--format=%at%x00%ct%x00%<(80,trunc)%s',
             '--all',
-            '--since=%s' % since,
+            '--since=%s' % real_since,
             '--until=%s' % until,
             '--author=%s' % '\|'.join(authors)]
 
