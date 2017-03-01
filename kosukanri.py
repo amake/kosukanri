@@ -79,7 +79,7 @@ def print_day_summary(entries, day):
                 print('    %s' % summarize_tickets(tickets, day))
 
 def calculate_timespan(entries, day):
-    times = [float(time) for entry in entries for time in [entry.authored, entry.committed]]
+    times = [int(time) for entry in entries for time in [entry.authored, entry.committed]]
     times_in_day = [time for time in times if datetime.utcfromtimestamp(time).date() == day]
     seconds = max(times_in_day) - min(times_in_day)
     return seconds_to_string(seconds) if seconds > 0 else ''
@@ -87,10 +87,10 @@ def calculate_timespan(entries, day):
 def seconds_to_string(seconds):
     if seconds < 60:
         return '1 second' if seconds == 1 else '%d seconds' % seconds
-    minutes = seconds / 60.0
+    minutes = seconds / 60
     if minutes < 60:
         return  '1 minute' if minutes == 1 else '%d minutes' % minutes
-    hours = minutes / 60.0
+    hours = minutes / 60
     return '1 hour' if hours == 1 else '%d hours' % hours
 
 def group_by_day(entries):
@@ -101,7 +101,7 @@ def group_by_day(entries):
     return daily
 
 def get_entry_days(entry):
-    times = [float(time) for time in [entry.authored, entry.committed]]
+    times = [int(time) for time in [entry.authored, entry.committed]]
     return set(datetime.utcfromtimestamp(time).date()
                for time in times)
 
