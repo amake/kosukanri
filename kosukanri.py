@@ -150,7 +150,8 @@ def main_impl(root, month, authors, ignore_repos):
 def main():
     parser = ArgumentParser(description='Summarize commits to a collection of git repositories')
     parser.add_argument('--verbose', '-v', action='count', default=0)
-    parser.add_argument('path', help='path containing git repositories')
+    parser.add_argument('--root', help='path containing git repositories (default: cwd)',
+                        default=os.getcwd())
     parser.add_argument('--month', help='month to calculate stats for, in YYYY-MM format (default: this month)')
     parser.add_argument('--authors', help='comma-delimited list of additional authors to search for')
     parser.add_argument('--ignore', help='comma-delimited list of repositories to ignore')
@@ -171,7 +172,7 @@ def main():
     authors = [] if not args.authors else args.authors.split(',')
     ignore_repos = [] if not args.ignore else args.ignore.split(',')
 
-    main_impl(args.path, month, authors, ignore_repos)
+    main_impl(args.root, month, authors, ignore_repos)
    
 if __name__ == '__main__':
     main()
