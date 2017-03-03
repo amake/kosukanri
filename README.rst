@@ -1,5 +1,5 @@
 KosuKanri
-============
+=========
 
 A tool for summarizing commits made to a collection of git repositories, for
 time-tracking purposes.
@@ -8,7 +8,7 @@ Usage
 =====
 Invoke as::
 
-    kosukanri <path to repos> [--month YYYY-MM]
+    kosukanri [--root <path to repos>] [--month <YYYY-MM>]
 
 Quick Install
 =============
