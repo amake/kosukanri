@@ -146,7 +146,7 @@ def main_impl(root, month, authors, ignore_repos):
     entries = [entry for repo in repos for entry in get_entries(repo, month, authors)]
     daily = group_by_day(entries)
     print_summary(daily, month)
-        
+
 def main():
     parser = ArgumentParser(description='Summarize commits to a collection of git repositories')
     parser.add_argument('--verbose', '-v', action='count', default=0)
@@ -173,6 +173,6 @@ def main():
     ignore_repos = [] if not args.ignore else args.ignore.split(',')
 
     main_impl(args.root, month, authors, ignore_repos)
-   
+
 if __name__ == '__main__':
     main()
