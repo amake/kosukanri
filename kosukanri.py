@@ -16,27 +16,33 @@ def get_stdout(cmd, cwd=None):
     logging.debug(' '.join(cmd))
     if cwd:
         logging.debug('cwd: %s', cwd)
-    proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.Popen(
+        cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = proc.communicate()
     logging.debug(stdout)
     return stdout if proc.returncode == 0 else None
+
 
 GIT_LOG = ['git', 'log']
 GIT_CONFIG_GET = ['git', 'config', '--get']
 TICKET_PATTERN = re.compile(r'[A-Z0-9]+-[0-9]+')
 
+
 def get_days_in_month(a_date):
     return monthrange(a_date.year, a_date.month)[1]
+
 
 def list_git_repos(in_dir):
     items = [path.join(in_dir, item) for item in os.listdir(in_dir)]
     return [item for item in items if path.isdir(item)
             and path.isdir(path.join(item, '.git'))]
 
+
 def get_git_author(repo):
     name = get_stdout(GIT_CONFIG_GET + ['user.name'], cwd=repo).strip()
     email = get_stdout(GIT_CONFIG_GET + ['user.email'], cwd=repo).strip()
     return '%s <%s>' % (name, email)
+
 
 def get_entries(repo, since=None, extra_authors=None):
     if not since:
@@ -48,6 +54,7 @@ def get_entries(repo, since=None, extra_authors=None):
     log = get_stdout(log_cmd, cwd=repo)
     return [Entry(repo, *entry.split('\x00')) for entry in log.strip().split('\n')] if log else []
 
+
 def git_log_args(since, authors):
     days = get_days_in_month(since)
     until = since.replace(day=days)
@@ -58,6 +65,7 @@ def git_log_args(since, authors):
             '--since=%s' % real_since,
             '--until=%s' % until,
             '--author=%s' % '\|'.join(authors)]
+
 
 def print_summary(data, month):
     days_count = get_days_in_month(month)
@@ -71,6 +79,7 @@ def print_summary(data, month):
         entries = data[day]
         if entries:
             print_day_summary(entries, day)
+
 
 def print_day_summary(entries, day):
     print(day)
@@ -87,25 +96,31 @@ def print_day_summary(entries, day):
             if not tickets:
                 print('  %s: %d commits over %s' % (repo_name, commits, span))
             elif len(tickets) == 1:
-                print('  %s: %d commits over %s (%s)' % (repo_name, commits, span, tickets.keys()[0]))
+                print('  %s: %d commits over %s (%s)' %
+                      (repo_name, commits, span, tickets.keys()[0]))
             else:
                 print('  %s: %d commits over %s' % (repo_name, commits, span))
                 print('    %s' % summarize_tickets(tickets, day))
 
+
 def calculate_timespan(entries, day):
-    times = [int(time) for entry in entries for time in [entry.authored, entry.committed]]
-    times_in_day = [time for time in times if datetime.utcfromtimestamp(time).date() == day]
+    times = [int(time) for entry in entries for time in [
+        entry.authored, entry.committed]]
+    times_in_day = [
+        time for time in times if datetime.utcfromtimestamp(time).date() == day]
     seconds = max(times_in_day) - min(times_in_day)
     return seconds_to_string(seconds) if seconds > 0 else ''
+
 
 def seconds_to_string(seconds):
     if seconds < 60:
         return '1 second' if seconds == 1 else '%d seconds' % seconds
     minutes = seconds / 60
     if minutes < 60:
-        return  '1 minute' if minutes == 1 else '%d minutes' % minutes
+        return '1 minute' if minutes == 1 else '%d minutes' % minutes
     hours = minutes / 60
     return '1 hour' if hours == 1 else '%d hours' % hours
+
 
 def group_by_day(entries):
     daily = defaultdict(list)
@@ -114,16 +129,19 @@ def group_by_day(entries):
             daily[day].append(entry)
     return daily
 
+
 def get_entry_days(entry):
     times = [int(time) for time in [entry.authored, entry.committed]]
     return set(datetime.utcfromtimestamp(time).date()
                for time in times)
+
 
 def group_by_repo(entries):
     repos = defaultdict(list)
     for entry in entries:
         repos[entry.repo].append(entry)
     return repos
+
 
 def group_by_ticket(entries):
     tickets = defaultdict(list)
@@ -133,28 +151,38 @@ def group_by_ticket(entries):
             tickets[match.group(0)].append(entry)
     return tickets
 
+
 def summarize_tickets(tickets, day):
-    raw_times = {ticket: calculate_timespan(ents, day) for ticket, ents in tickets.iteritems()}
+    raw_times = {ticket: calculate_timespan(
+        ents, day) for ticket, ents in tickets.iteritems()}
     times = [ticket if not time else '%s: %s' % (ticket, time)
              for ticket, time in sorted(raw_times.iteritems())]
     return ', '.join(times)
 
+
 def main_impl(root, month, authors, ignore_repos):
     logging.debug('Looking for repos in %s...', path.abspath(root))
-    repos = [repo for repo in list_git_repos(root) if not path.basename(repo) in ignore_repos]
+    repos = [repo for repo in list_git_repos(
+        root) if not path.basename(repo) in ignore_repos]
     logging.debug('Found %d repos', len(repos))
-    entries = [entry for repo in repos for entry in get_entries(repo, month, authors)]
+    entries = [entry for repo in repos for entry in get_entries(
+        repo, month, authors)]
     daily = group_by_day(entries)
     print_summary(daily, month)
 
+
 def main():
-    parser = ArgumentParser(description='Summarize commits to a collection of git repositories')
+    parser = ArgumentParser(
+        description='Summarize commits to a collection of git repositories')
     parser.add_argument('--verbose', '-v', action='count', default=0)
     parser.add_argument('--root', help='path containing git repositories (default: cwd)',
                         default=os.getcwd())
-    parser.add_argument('--month', help='month to calculate stats for, in YYYY-MM format (default: this month)')
-    parser.add_argument('--authors', help='comma-delimited list of additional authors to search for')
-    parser.add_argument('--ignore', help='comma-delimited list of repositories to ignore')
+    parser.add_argument(
+        '--month', help='month to calculate stats for, in YYYY-MM format (default: this month)')
+    parser.add_argument(
+        '--authors', help='comma-delimited list of additional authors to search for')
+    parser.add_argument(
+        '--ignore', help='comma-delimited list of repositories to ignore')
     args = parser.parse_args()
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -173,6 +201,7 @@ def main():
     ignore_repos = [] if not args.ignore else args.ignore.split(',')
 
     main_impl(args.root, month, authors, ignore_repos)
+
 
 if __name__ == '__main__':
     main()
