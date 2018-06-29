@@ -35,7 +35,7 @@ def get_days_in_month(a_date):
 def list_git_repos(in_dir):
     items = [path.join(in_dir, item) for item in os.listdir(in_dir)]
     return [item for item in items if path.isdir(item)
-            and path.isdir(path.join(item, '.git'))]
+            and path.exists(path.join(item, '.git'))]
 
 
 def get_git_author(repo):
